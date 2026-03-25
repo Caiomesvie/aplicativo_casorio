@@ -1,38 +1,36 @@
 // Arquivo: app/(tabs)/index.tsx
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
+// 1. Adicionamos o ScrollView na importação
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ScrollView, StatusBar } from 'react-native';
+import { useRouter } from 'expo-router';
 
 // --- 1. NOSSA PALETA DE CORES ---
-// Usamos códigos HEX para definir os tons exatos de Verde, Laranja e Terracota
 const cores = {
+  azulClaro: '#A2D2FF',
   verde: '#A8D5BA',      // Verde pastel (menta suave)
   laranja: '#FFC8A2',    // Laranja pastel (pêssego)
   terracota: '#E29578',  // Terracota suave (coral)
-  fundo: '#FAFAFA',      // Fundo super claro e clean (quase branco)
+  azul: '#A8CDE5',       // Azul pastel (para Anexos)
+  amarelo: '#FDE293',    // Amarelo pastel (para Orçamentos)
+  lilas: '#D1C4E9',      // Lilás pastel (para Compromissos)
+  fundo: '#FAFAFA',      // Fundo super claro e clean
   branco: '#FFFFFF',
-  textoEscuro: '#2D3142' // Cor de texto mais moderna que o preto puro
+  textoEscuro: '#2D3142' // Cor de texto mais moderna
 };
 
 // --- 2. CONFIGURAÇÕES DO CASAMENTO ---
-const DATA_CASAMENTO = new Date('2026-09-11T00:00:00'); // Coloque a data real aqui! (Ano-Mês-Dia)
-const SENHA_SECRETA = process.env.EXPO_PUBLIC_SENHA_SECRETA
-
+const DATA_CASAMENTO = new Date('2027-09-11T00:00:00'); // Data do Caio e da Natália!
+const SENHA_SECRETA = '110927';
 export default function HomeScreen() {
-  // --- 3. ESTADOS (A memória do aplicativo) ---
-  // desbloqueado: Diz se a tela inicial pode aparecer (começa como Falso)
+  const router = useRouter();
   const [desbloqueado, setDesbloqueado] = useState(false);
   const [senhaDigitada, setSenhaDigitada] = useState('');
 
-  // Guarda os dias, horas, minutos e segundos restantes
   const [tempoRestante, setTempoRestante] = useState({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
 
-  // --- 4. LÓGICA DA CONTAGEM REGRESSIVA ---
-  // O useEffect executa um pedaço de código em segundo plano
   useEffect(() => {
-    // Se o app estiver bloqueado, nem tenta calcular o tempo
     if (!desbloqueado) return;
 
-    // Atualiza o relógio a cada 1 segundo (1000 milissegundos)
     const relogio = setInterval(() => {
       const agora = new Date();
       const diferenca = DATA_CASAMENTO.getTime() - agora.getTime();
@@ -47,39 +45,38 @@ export default function HomeScreen() {
       }
     }, 1000);
 
-    // Limpa o relógio quando a tela for fechada
     return () => clearInterval(relogio);
-  }, [desbloqueado]); // Isso faz o relógio só iniciar quando "desbloqueado" virar verdadeiro
+  }, [desbloqueado]);
 
-  // --- 5. FUNÇÃO DE VERIFICAR A SENHA ---
   const verificarSenha = () => {
     if (senhaDigitada === SENHA_SECRETA) {
-      setDesbloqueado(true); // Abre as portas do app!
+      setDesbloqueado(true);
     } else {
       Alert.alert('Ops!', 'Senha incorreta. Tente novamente! 😅');
-      setSenhaDigitada(''); // Limpa o campo
+      setSenhaDigitada('');
     }
   };
 
   // ==========================================
-  // O QUE APARECE NA TELA (INTERFACE)
+  // INTERFACE
   // ==========================================
 
-  // SE NÃO ESTIVER DESBLOQUEADO, MOSTRA A TELA DE SENHA
+  // TELA DE BLOQUEIO MANTIDA COM SUAS CONFIGURAÇÕES (6 dígitos)
   if (!desbloqueado) {
     return (
-      <View style={[styles.container, styles.centralizado]}>
+      <View style={styles.telaBloqueio}>
         <Text style={styles.tituloBloqueio}>Nosso Casamento 💍</Text>
         <Text style={styles.subtituloBloqueio}>Acesso restrito aos noivos</Text>
-
+        <StatusBar barStyle="dark-content" backgroundColor={cores.fundo} />
         <TextInput
           style={styles.inputSenha}
-          keyboardType="numeric" // Mostra o teclado de números do celular
-          secureTextEntry={true} // Esconde os números como "bolinhas"
-          maxLength={6} // Limita a 4 números
+          keyboardType="numeric"
+          secureTextEntry={true}
+          maxLength={6}
           value={senhaDigitada}
           onChangeText={setSenhaDigitada}
           placeholder="******"
+          placeholderTextColor="#A0A0A0"
         />
 
         <TouchableOpacity style={styles.botaoEntrar} onPress={verificarSenha}>
@@ -89,13 +86,14 @@ export default function HomeScreen() {
     );
   }
 
-  // SE A SENHA ESTIVER CORRETA, MOSTRA A HOME COM O DASHBOARD
+  // TELA HOME COM SCROLLVIEW E GRADE DE 6 BOTÕES
   return (
-    <View style={styles.container}>
-      {/* Cabeçalho */}
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+
+      <StatusBar barStyle="dark-content" backgroundColor={cores.fundo} />
+
       <Text style={styles.tituloHome}>Bem-vindos, Caio e Natália!</Text>
 
-      {/* Dashboard - Contagem Regressiva */}
       <View style={styles.cardContagem}>
         <Text style={styles.tituloContagem}>Faltam para o grande dia:</Text>
         <View style={styles.relogioContainer}>
@@ -118,41 +116,71 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Botões de Navegação (Módulos) */}
       <View style={styles.gridBotoes}>
-        {/* Botão Convidados (Verde) */}
-        <TouchableOpacity style={[styles.botaoModulo, { backgroundColor: cores.verde }]}>
-          <Text style={styles.textoBotaoModulo}>Lista de Convidados</Text>
+
+        {/* 1. Convidados */}
+        <TouchableOpacity style={[styles.botaoModulo, { backgroundColor: cores.verde }]} onPress={() => router.push('/convidados')}>
+          <Text style={styles.emojiBotao}>👥</Text>
+          <Text style={styles.textoBotaoModulo}>Convidados</Text>
         </TouchableOpacity>
 
-        {/* Botão Tarefas (Laranja) */}
-        <TouchableOpacity style={[styles.botaoModulo, { backgroundColor: cores.laranja }]}>
-          <Text style={styles.textoBotaoModulo}>Checklist de Tarefas</Text>
+        {/* 2. Tarefas */}
+        <TouchableOpacity style={[styles.botaoModulo, { backgroundColor: cores.laranja }]} onPress={() => router.push('/tarefas')}>
+          <Text style={styles.emojiBotao}>✅</Text>
+          <Text style={styles.textoBotaoModulo}>Tarefas</Text>
         </TouchableOpacity>
 
-        {/* Botão Orçamento (Terracota) */}
-        <TouchableOpacity style={[styles.botaoModulo, { backgroundColor: cores.terracota }]}>
-          <Text style={styles.textoBotaoModulo}>Controle de Orçamento</Text>
+        {/* 3. Orçamentos */}
+        <TouchableOpacity style={[styles.botaoModulo, { backgroundColor: cores.amarelo }]} onPress={() => router.push('/orcamentos')}>
+          <Text style={styles.emojiBotao}>📊</Text>
+          <Text style={styles.textoBotaoModulo}>Orçamentos</Text>
         </TouchableOpacity>
+
+        {/* 4. Pagamentos */}
+        <TouchableOpacity style={[styles.botaoModulo, { backgroundColor: cores.terracota }]} onPress={() => router.push('/pagamentos')}>
+          <Text style={styles.emojiBotao}>💰</Text>
+          <Text style={styles.textoBotaoModulo}>Pagamentos</Text>
+        </TouchableOpacity>
+
+        {/* 5. Agenda/Compromissos */}
+        <TouchableOpacity style={[styles.botaoModulo, { backgroundColor: cores.lilas }]} onPress={() => router.push('/agenda')}>
+          <Text style={styles.emojiBotao}>📅</Text>
+          <Text style={styles.textoBotaoModulo}>Agenda</Text>
+        </TouchableOpacity>
+
+        {/* 6. Bloco de Notas */}
+        <TouchableOpacity style={[styles.botaoModulo, { backgroundColor: cores.azulClaro }]} onPress={() => router.push('/notas')}>
+          <Text style={styles.emojiBotao}>📝</Text>
+          <Text style={styles.textoBotaoModulo}>Anotações</Text>
+        </TouchableOpacity>
+
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 // --- 6. ESTILOS (O VISUAL DO APLICATIVO) ---
 const styles = StyleSheet.create({
+  // Estilo base do app
   container: {
     flex: 1,
     backgroundColor: cores.fundo,
+  },
+  // O conteúdo interno do ScrollView precisa de padding para não colar nas bordas
+  scrollContent: {
     padding: 24,
     paddingTop: 60,
+    paddingBottom: 40,
   },
-  centralizado: {
+  // Estilo específico para centralizar a tela de bloqueio
+  telaBloqueio: {
+    flex: 1,
+    backgroundColor: cores.fundo,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 24,
   },
 
-  // Estilos da Tela de Bloqueio
   tituloBloqueio: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -161,38 +189,37 @@ const styles = StyleSheet.create({
   },
   subtituloBloqueio: {
     fontSize: 16,
-    color: '#666',
+    color: '#888',
     marginBottom: 40,
   },
   inputSenha: {
     backgroundColor: cores.branco,
-    width: '60%',
+    width: '70%', // Aumentei um pouquinho para caber os 6 dígitos confortavelmente
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     fontSize: 24,
     textAlign: 'center',
-    letterSpacing: 10, // Espaço entre os números
+    letterSpacing: 10,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: '#EAEAEA',
+    elevation: 1,
   },
   botaoEntrar: {
     backgroundColor: cores.verde,
     paddingVertical: 15,
     paddingHorizontal: 40,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   textoBotaoEntrar: {
-    color: cores.branco,
+    color: cores.textoEscuro,
     fontSize: 18,
     fontWeight: 'bold',
   },
-
-  // Estilos da Home (Dashboard)
   tituloHome: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: cores.verde,
+    color: cores.terracota,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -202,16 +229,15 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     marginBottom: 30,
-    // Efeito de sombra (Sutil)
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
   tituloContagem: {
     fontSize: 18,
-    color: cores.terracota,
+    color: cores.textoEscuro,
     fontWeight: '600',
     marginBottom: 15,
   },
@@ -224,31 +250,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   numeroTempo: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: cores.verde,
   },
   legendaTempo: {
     fontSize: 12,
     color: '#888',
     textTransform: 'uppercase',
+    fontWeight: '500',
+    marginTop: 4,
   },
 
-  // Estilos dos Botões de Navegação
+  // --- ESTILOS DA GRADE COM 6 MÓDULOS ---
   gridBotoes: {
-    flex: 1,
-    gap: 15, // Espaçamento entre os botões
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 15,
   },
   botaoModulo: {
-    padding: 20,
-    borderRadius: 12,
+    width: '47%',
+    padding: 15,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 80,
+    height: 110,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 1,
+  },
+  emojiBotao: {
+    fontSize: 32,
+    marginBottom: 8,
   },
   textoBotaoModulo: {
-    color: cores.branco,
-    fontSize: 18,
+    color: cores.textoEscuro,
+    fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
   }
 });
